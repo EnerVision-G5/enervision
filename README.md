@@ -1,5 +1,7 @@
 # enervision
 
+[![ci](https://github.com/EnerVision-G5/enervision/actions/workflows/ci.yml/badge.svg)](https://github.com/EnerVision-G5/enervision/actions/workflows/ci.yml)
+
 Repo chapeau du projet Smart Energy Optimizer (EnerVision). Il agrège les
 services en submodules Git et porte les contrats d'interface qui font foi entre
 les équipes.
@@ -7,7 +9,7 @@ les équipes.
 ## Submodules
 
 | Submodule | Rôle |
-|---|---|
+| --- | --- |
 | `api` | API métier FastAPI on-premise : sites, mesures, alertes, sous JWT |
 | `predict` | Service d'inférence FastAPI sur Azure : prédictions XGBoost |
 | `dashboard` | Front React + TypeScript (Vite) |
@@ -40,6 +42,19 @@ Les fichiers ne sont jamais écrits à la main. Ils sont générés depuis les D
 Pydantic des services, et le dashboard en dérive ses types TypeScript. Une
 garde CI `contract-drift` fait échouer le build de `api` et de `predict` dès
 que le code s'écarte du contrat gelé.
+
+## Intégration continue
+
+`.github/workflows/ci.yml` s'exécute à chaque push et sur chaque pull request
+(critère EV-02) :
+
+- checkout avec `submodules: recursive` pour voir l'arborescence complète ;
+- `git submodule status --recursive` pour tracer les pointeurs ;
+- lint de la documentation Markdown du repo parent (`markdownlint-cli2`).
+
+Un document Markdown non conforme fait échouer la PR. Chaque submodule porte en
+plus son propre pipeline lint / tests / build, avec un badge de statut dans son
+README.
 
 ## Documentation
 
