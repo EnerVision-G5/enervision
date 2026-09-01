@@ -16,5 +16,9 @@ jobs:
       - name: État des submodules
         run: git submodule status --recursive
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Lint Markdown
-        run: npx --yes markdownlint-cli2 "**/*.md" "#**/node_modules"
+        run: npx --yes markdownlint-cli2@0.23.2 "**/*.md" "#**/node_modules"
