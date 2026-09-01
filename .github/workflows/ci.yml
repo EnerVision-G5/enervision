@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint documentation et submodules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: État des submodules
+        run: git submodule status --recursive
+
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2 "**/*.md" "#**/node_modules"
