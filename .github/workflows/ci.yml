@@ -12,13 +12,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+        # Les submodules pointent des repos privés de l'organisation : le
+        # GITHUB_TOKEN par défaut ne peut pas les cloner. Tant qu'une clé de
+        # déploiement de CI n'est pas posée sur api / dashboard / predict /
+        # infra (cf. EV-01), on tente le checkout récursif sans en faire un
+        # échec bloquant.
+        continue-on-error: true
 
       - name: État des submodules
-        run: git submodule status --recursive
+        run: git submodule status --recursive || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Lint Markdown
-        run: npx --yes markdownlint-cli2@0.23.2 "**/*.md" "#**/node_modules"
+      - name: Lint Markdown (documentation du repo parent)
+        run: npx --yes markdownlint-cli2@0.23.2 "*.md" "docs/**/*.md"
