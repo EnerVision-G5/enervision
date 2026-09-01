@@ -1,0 +1,3 @@
+# Les contrats gelés sont comparés par la CI Linux : fins de ligne LF imposées.
+*.json text eol=lf
+*.md text eol=lf
