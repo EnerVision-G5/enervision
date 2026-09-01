@@ -1,0 +1,233 @@
+{
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "description": "Corps de réponse commun à toutes les erreurs du service d'inférence.",
+        "properties": {
+          "detail": {
+            "description": "Message d'erreur destiné au consommateur de l'API.",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HealthOut": {
+        "description": "État de disponibilité du service d'inférence.",
+        "properties": {
+          "status": {
+            "const": "ok",
+            "description": "Statut du service, ok s'il répond.",
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "Horodatage de la réponse, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "PredictionOut": {
+        "description": "Prévision complète renvoyée pour un site.",
+        "properties": {
+          "generated_at": {
+            "description": "Horodatage de production de la prévision, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "model_version": {
+            "description": "Tag MLflow du modèle ayant servi la réponse.",
+            "title": "Model Version",
+            "type": "string"
+          },
+          "points": {
+            "description": "Série prédite, triée par horodatage croissant.",
+            "items": {
+              "$ref": "#/components/schemas/PredictionPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "site_id": {
+            "description": "Identifiant du site prédit.",
+            "title": "Site Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "model_version",
+          "generated_at",
+          "points"
+        ],
+        "title": "PredictionOut",
+        "type": "object"
+      },
+      "PredictionPoint": {
+        "description": "Point de la série prédite, avec son intervalle de confiance.",
+        "properties": {
+          "lower_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne basse de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Lower Bound Kw"
+          },
+          "predicted_consumption_kw": {
+            "description": "Puissance prédite en kilowatts.",
+            "title": "Predicted Consumption Kw",
+            "type": "number"
+          },
+          "timestamp": {
+            "description": "Horodatage du point prédit, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "upper_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne haute de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Upper Bound Kw"
+          }
+        },
+        "required": [
+          "timestamp",
+          "predicted_consumption_kw",
+          "lower_bound_kw",
+          "upper_bound_kw"
+        ],
+        "title": "PredictionPoint",
+        "type": "object"
+      },
+      "PredictionRequest": {
+        "description": "Demande de prévision de consommation pour un site.",
+        "properties": {
+          "horizon_hours": {
+            "default": 24,
+            "description": "Profondeur de la prévision en heures, entre 1 et 48.",
+            "maximum": 48.0,
+            "minimum": 1.0,
+            "title": "Horizon Hours",
+            "type": "integer"
+          },
+          "site_id": {
+            "description": "Identifiant du site à prédire.",
+            "title": "Site Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "title": "PredictionRequest",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Contrat du service de prédiction déployé sur Azure. L'endpoint de prédiction renvoie 501 tant que le modèle XGBoost n'est pas servi.",
+    "title": "EnerVision service d'inférence",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/predict": {
+      "post": {
+        "operationId": "predict_api_v1_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu du modèle."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "summary": "Prédire la consommation d'un site",
+        "tags": [
+          "predict"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Endpoint trivial, réellement implémenté : aucune dépendance externe.",
+        "operationId": "get_health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Vérifier la disponibilité du service",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

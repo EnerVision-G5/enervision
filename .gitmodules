@@ -1,0 +1,16 @@
+[submodule "api"]
+	path = api
+	url = https://github.com/EnerVision-G5/api.git
+	branch = develop
+[submodule "predict"]
+	path = predict
+	url = https://github.com/EnerVision-G5/predict.git
+	branch = develop
+[submodule "dashboard"]
+	path = dashboard
+	url = https://github.com/EnerVision-G5/dashboard.git
+	branch = develop
+[submodule "infra"]
+	path = infra
+	url = https://github.com/EnerVision-G5/infra.git
+	branch = master
