@@ -364,6 +364,114 @@
         "title": "PaginationMeta",
         "type": "object"
       },
+      "PredictionOut": {
+        "description": "Prévision complète renvoyée pour un site.",
+        "properties": {
+          "generated_at": {
+            "description": "Horodatage de production de la prévision, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "model_version": {
+            "description": "Tag MLflow du modèle ayant servi la réponse.",
+            "title": "Model Version",
+            "type": "string"
+          },
+          "points": {
+            "description": "Série prédite, triée par horodatage croissant.",
+            "items": {
+              "$ref": "#/components/schemas/PredictionPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "site_id": {
+            "description": "Identifiant du site prédit.",
+            "title": "Site Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "model_version",
+          "generated_at",
+          "points"
+        ],
+        "title": "PredictionOut",
+        "type": "object"
+      },
+      "PredictionPoint": {
+        "description": "Point de la série prédite, avec son intervalle de confiance.",
+        "properties": {
+          "lower_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne basse de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Lower Bound Kw"
+          },
+          "predicted_consumption_kw": {
+            "description": "Puissance prédite en kilowatts.",
+            "title": "Predicted Consumption Kw",
+            "type": "number"
+          },
+          "timestamp": {
+            "description": "Horodatage du point prédit, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "upper_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne haute de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Upper Bound Kw"
+          }
+        },
+        "required": [
+          "timestamp",
+          "predicted_consumption_kw",
+          "lower_bound_kw",
+          "upper_bound_kw"
+        ],
+        "title": "PredictionPoint",
+        "type": "object"
+      },
+      "PredictionRequest": {
+        "description": "Demande de prévision de consommation pour un site.",
+        "properties": {
+          "horizon_hours": {
+            "default": 24,
+            "description": "Profondeur de la prévision en heures, entre 1 et 48.",
+            "maximum": 48.0,
+            "minimum": 1.0,
+            "title": "Horizon Hours",
+            "type": "integer"
+          },
+          "site_id": {
+            "description": "Identifiant du site à prédire.",
+            "title": "Site Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "title": "PredictionRequest",
+        "type": "object"
+      },
       "ReadingsPage": {
         "description": "Page de mesures énergétiques accompagnée de ses métadonnées.",
         "properties": {
@@ -502,7 +610,7 @@
   "info": {
     "description": "Contrat de l'API métier on-premise : sites, mesures énergétiques et alertes, servis sous JWT. Les endpoints non triviaux renvoient 501 tant que leur ticket d'implémentation n'est pas livré.",
     "title": "EnerVision API métier",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -671,6 +779,82 @@
         "summary": "Vérifier la disponibilité de l'API",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/predict": {
+      "post": {
+        "operationId": "create_prediction_api_v1_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service d'inférence indisponible."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Obtenir la prévision de consommation d'un site",
+        "tags": [
+          "predictions"
         ]
       }
     },
