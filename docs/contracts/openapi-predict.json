@@ -42,10 +42,21 @@
       "PredictionOut": {
         "description": "Prévision complète renvoyée pour un site.",
         "properties": {
+          "feature_lag_hours": {
+            "description": "Age des variables ayant servi la prevision, en heures, ecart entre generated_at et history_end. Une prevision calculee sur des variables vieilles de trois jours n'est pas fausse, elle est aveugle : ce champ est la seule chose qui le dise.",
+            "title": "Feature Lag Hours",
+            "type": "number"
+          },
           "generated_at": {
             "description": "Horodatage de production de la prévision, ISO 8601 UTC.",
             "format": "date-time",
             "title": "Generated At",
+            "type": "string"
+          },
+          "history_end": {
+            "description": "Derniere heure observee sur laquelle la prevision s'appuie, ISO 8601 UTC. Distincte de generated_at : le service predit a partir des variables publiees par l'ETL, qui peuvent dater.",
+            "format": "date-time",
+            "title": "History End",
             "type": "string"
           },
           "model_version": {
@@ -71,6 +82,8 @@
           "site_id",
           "model_version",
           "generated_at",
+          "history_end",
+          "feature_lag_hours",
           "points"
         ],
         "title": "PredictionOut",
@@ -146,13 +159,73 @@
         ],
         "title": "PredictionRequest",
         "type": "object"
+      },
+      "ReadinessOut": {
+        "description": "Ce dont le service dispose pour servir une prévision.\n\nDistincte de HealthOut, et la distinction n'est pas cosmétique. `/health`\nest la sonde de vivacité de l'hébergeur et ne consulte rien : la lier au\nregistre ferait redémarrer un service en parfait état chaque fois que\nMLflow tousse. Cette route-ci consulte, et personne ne redémarre rien\ndessus — elle sert à savoir POURQUOI une prévision est indisponible, ce\nqu'un 503 nu ne dit pas.",
+        "properties": {
+          "detail": {
+            "description": "Cause de l'indisponibilite, vide quand le service est pret.",
+            "title": "Detail",
+            "type": "string"
+          },
+          "features_available": {
+            "description": "Vrai quand au moins une partition de variables est lisible sur la fenetre de recul configuree.",
+            "title": "Features Available",
+            "type": "boolean"
+          },
+          "history_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Derniere heure disponible dans les variables, ISO 8601 UTC. Nulle quand aucune partition n'est lisible.",
+            "title": "History End"
+          },
+          "model_resolved": {
+            "description": "Vrai quand le registre MLflow a resolu un modele.",
+            "title": "Model Resolved",
+            "type": "boolean"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version servie, nulle quand aucun modele n'est resolu.",
+            "title": "Model Version"
+          },
+          "ready": {
+            "description": "Vrai quand le service peut servir une prevision : un modele est resolu et des variables existent.",
+            "title": "Ready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ready",
+          "model_resolved",
+          "model_version",
+          "features_available",
+          "history_end",
+          "detail"
+        ],
+        "title": "ReadinessOut",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "Contrat du service de prédiction déployé sur Azure. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
     "title": "EnerVision service d'inférence",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -235,6 +308,28 @@
           }
         },
         "summary": "Vérifier la disponibilité du service",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/ready": {
+      "get": {
+        "description": "Diagnostic, et non sonde de vivacité : voir ReadinessOut.\n\nRépond toujours 200, y compris quand rien n'est prêt. Un 503 ici ferait\nde cette route une seconde sonde et l'hébergeur redémarrerait le service\nà chaque hoquet de MLflow, ce que `/health` évite précisément. Son\nconsommateur est l'API métier, qui a besoin de dire à ses utilisateurs\npourquoi la prévision manque — un 503 nu ne le dit pas.",
+        "operationId": "get_readiness_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dire ce dont le service dispose pour prédire",
         "tags": [
           "health"
         ]
