@@ -24,7 +24,8 @@ sont eux aussi générés.
 1. Modifier le DTO Pydantic dans le repo concerné, sur une branche dédiée.
 2. Régénérer le fichier gelé avec la commande d'export du tableau ci-dessus.
 3. Incrémenter `CONTRACT_VERSION` dans `app/main.py` côté `api` ou
-   `inference/app.py` côté `predict`, en suivant la règle semver ci-dessous.
+   `services/serving/src/serving/api.py` côté `predict`, en suivant la règle
+   semver ci-dessous.
 4. Régénérer le fichier gelé une seconde fois pour que la nouvelle version
    apparaisse dans `info.version`.
 5. Ouvrir une PR sur ce repo `enervision` contenant le diff du fichier gelé.

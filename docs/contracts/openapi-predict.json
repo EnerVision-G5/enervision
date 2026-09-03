@@ -150,14 +150,15 @@
     }
   },
   "info": {
-    "description": "Contrat du service de prédiction déployé sur Azure. L'endpoint de prédiction renvoie 501 tant que le modèle XGBoost n'est pas servi.",
+    "description": "Contrat du service de prédiction déployé sur Azure. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
     "title": "EnerVision service d'inférence",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/predict": {
       "post": {
+        "description": "Retourne la série prédite d'un site sur l'horizon demandé.",
         "operationId": "predict_api_v1_predict_post",
         "requestBody": {
           "content": {
@@ -199,6 +200,16 @@
               }
             },
             "description": "Paramètres de requête invalides."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Aucun modèle résolu par le registre."
           }
         },
         "summary": "Prédire la consommation d'un site",
@@ -209,7 +220,7 @@
     },
     "/health": {
       "get": {
-        "description": "Endpoint trivial, réellement implémenté : aucune dépendance externe.",
+        "description": "Endpoint trivial, réellement implémenté : aucune dépendance externe.\n\nIl ne consulte volontairement pas le registre. C'est la sonde de vivacité\nde l'hébergeur : la lier à MLflow ferait redémarrer un service en parfait\nétat chaque fois que le registre tousse.",
         "operationId": "get_health_health_get",
         "responses": {
           "200": {
