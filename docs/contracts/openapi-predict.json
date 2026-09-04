@@ -219,13 +219,265 @@
         ],
         "title": "ReadinessOut",
         "type": "object"
+      },
+      "SourceSiteOut": {
+        "description": "Site du référentiel de la source, relayé tel qu'elle le sert.\n\nCe n'est pas le référentiel de la base : c'est celui de l'API Mock, que\nl'API métier vient chercher ici parce qu'elle ne connaît pas la source.\nLes champs sont ceux du contrat de la source, sans traduction.\n\nTout est optionnel sauf l'identifiant, et ce n'est pas du laxisme : un\nrelais qui exigerait la forme complète rendrait 500 dès qu'un seul site\nest mal décrit, emportant les six autres avec lui. Le consommateur écarte\nce qu'il ne peut pas exploiter ; le relais, lui, rend ce qu'il a reçu.",
+        "properties": {
+          "capacity_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puissance installée en kilowatts.",
+            "title": "Capacity Kw"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Localisation du site, absente si la source ne la sert pas.",
+            "title": "Location"
+          },
+          "site_id": {
+            "description": "Identifiant du site.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "site_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nom lisible du site.",
+            "title": "Site Name"
+          },
+          "site_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Type de site : office, factory, datacenter.",
+            "title": "Site Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "État déclaré : active ou inactive.",
+            "title": "Status"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "title": "SourceSiteOut",
+        "type": "object"
+      },
+      "SpikeReadingOut": {
+        "description": "Mesure constatée sur le site juste après le déclenchement d'un pic.\n\nElle est lue et non calculée : la simulation agit sur la source, et c'est\nla source qui dit ce qu'elle sert désormais. Les null et leurs motifs\ntraversent intacts, comme partout ailleurs dans la chaîne.",
+        "properties": {
+          "consumption_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puissance instantanée en kilowatts.",
+            "title": "Consumption Kw"
+          },
+          "consumption_kwh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Énergie sur la période en kilowattheures.",
+            "title": "Consumption Kwh"
+          },
+          "current_a": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intensité en ampères.",
+            "title": "Current A"
+          },
+          "data_quality": {
+            "description": "Qualification de la source : good, partial, degraded, critical.",
+            "title": "Data Quality",
+            "type": "string"
+          },
+          "humidity_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Humidité relative en pourcentage.",
+            "title": "Humidity Percent"
+          },
+          "null_reasons": {
+            "description": "Causes des valeurs manquantes, telles que la source les donne.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Null Reasons",
+            "type": "array"
+          },
+          "power_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Facteur de puissance, entre 0 et 1.",
+            "title": "Power Factor"
+          },
+          "site_id": {
+            "description": "Identifiant du site mesuré.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "temperature_celsius": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Température extérieure en degrés Celsius.",
+            "title": "Temperature Celsius"
+          },
+          "timestamp": {
+            "description": "Horodatage de la mesure, ISO 8601.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "voltage_v": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tension en volts.",
+            "title": "Voltage V"
+          }
+        },
+        "required": [
+          "timestamp",
+          "site_id",
+          "data_quality"
+        ],
+        "title": "SpikeReadingOut",
+        "type": "object"
+      },
+      "SpikeSimulationOut": {
+        "description": "Résultat d'une simulation de pic : ce qui a été demandé, et ce qui suit.\n\n`reading` est la mesure relue immédiatement après le déclenchement. Elle\nest optionnelle parce qu'une source qui accepte le pic puis se tait sur\n`/current` a quand même déclenché le pic : rendre la simulation en échec\nferait croire le contraire, et un second appel doublerait le pic.",
+        "properties": {
+          "duration_minutes": {
+            "description": "Durée demandée du pic, en minutes.",
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "event": {
+            "description": "Nature de l'événement, consumption_spike.",
+            "title": "Event",
+            "type": "string"
+          },
+          "message": {
+            "description": "Message rendu par la source, lisible tel quel.",
+            "title": "Message",
+            "type": "string"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpikeReadingOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mesure relue après le pic, absente si la source s'est tue."
+          },
+          "simulated_at": {
+            "description": "Horodatage du déclenchement, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Simulated At",
+            "type": "string"
+          },
+          "site_id": {
+            "description": "Site sur lequel le pic a été déclenché.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "status": {
+            "description": "Statut rendu par la source, simulated en cas de succès.",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "status",
+          "event",
+          "duration_minutes",
+          "message",
+          "simulated_at"
+        ],
+        "title": "SpikeSimulationOut",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "Contrat du service de prédiction déployé sur Azure. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
     "title": "EnerVision service d'inférence",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -288,6 +540,129 @@
         "summary": "Prédire la consommation d'un site",
         "tags": [
           "predict"
+        ]
+      }
+    },
+    "/api/v1/simulate/spike/{site_id}": {
+      "post": {
+        "description": "Déclenche un pic sur la source et rend la mesure qui suit.\n\nDeux appels et non un seul : la source confirme la simulation sans dire ce\nqu'elle sert désormais, et une confirmation nue ne prouve rien à qui\nregarde un dashboard. La relecture de `/current` donne la valeur constatée.\n\nSon échec ne fait pas échouer la réponse : le pic est déclenché, le dire\nen erreur inviterait à rejouer l'appel et à superposer deux pics.",
+        "operationId": "simulate_spike_api_v1_simulate_spike__site_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Durée du pic simulé, en minutes.",
+            "in": "query",
+            "name": "duration_minutes",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "description": "Durée du pic simulé, en minutes.",
+              "maximum": 240,
+              "minimum": 1,
+              "title": "Duration Minutes",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpikeSimulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "La source n'a pas répondu."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Le service n'a pas terminé son démarrage."
+          }
+        },
+        "summary": "Déclencher un pic de consommation sur la source",
+        "tags": [
+          "simulate"
+        ]
+      }
+    },
+    "/api/v1/sites": {
+      "get": {
+        "description": "Rend le référentiel de la source, sans le traduire ni le stocker.\n\nLe service relaie, il n'entretient rien : c'est l'API métier qui décide\nd'en faire un référentiel en base, parce que c'est elle qui tient la base.\nLe relais existe parce qu'elle ne connaît pas la source, et ne doit pas la\nconnaître : une adresse d'API Mock dans sa configuration ferait d'elle un\nsecond client de la source, avec sa propre façon de la lire.\n\n502 et non 503 : la panne est en amont du service, pas en lui. Les\ndistinguer permet à l'appelant de dire lequel des deux est tombé.",
+        "operationId": "list_source_sites_api_v1_sites_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceSiteOut"
+                  },
+                  "title": "Response List Source Sites Api V1 Sites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "La source n'a pas répondu."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Le service n'a pas terminé son démarrage."
+          }
+        },
+        "summary": "Relayer le référentiel des sites servi par la source",
+        "tags": [
+          "sites"
         ]
       }
     },
