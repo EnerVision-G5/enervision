@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Remplacé par ADR-017 |
 | Exigences liées | F7 |
 
 ## Contexte
@@ -48,4 +48,4 @@ apparaissent.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 — remplacé par [ADR-017](ADR-017-pivot-tout-on-premise.md) : le dashboard est un conteneur Nginx servi par Traefik sur la VM ; la SPA statique (ADR-008), la séparation d'origines et la configuration CORS restent.

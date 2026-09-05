@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Accepté — amendé par ADR-017 |
 | Exigences liées | F6, NF1 |
 
 ## Contexte
@@ -50,4 +50,4 @@ devient nécessaire.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 ([ADR-017](ADR-017-pivot-tout-on-premise.md)) — la décision est inchangée ; la clé de signature vient du vault Ansible chiffré et non de Key Vault (ADR-013 remplacé). Le dashboard reste sur une autre origine que l'API, servie par Traefik.

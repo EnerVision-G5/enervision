@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | — (décision reportée à J4) |
 | Auteur | Équipe G5 (atelier de décision d'architecture), responsable GL |
-| Statut | **Proposé** — en attente d'arbitrage |
+| Statut | Sans objet — remplacé par ADR-017 |
 | Exigences liées | NF1, NF9 |
 
 ## Contexte
@@ -41,4 +41,4 @@ inter-environnements restent en attente de leur transport définitif.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 — jamais tranché, devenu sans objet et remplacé par [ADR-017](ADR-017-pivot-tout-on-premise.md) : il n'y a plus qu'un environnement, donc plus de lien à sécuriser.
