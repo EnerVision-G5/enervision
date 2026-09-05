@@ -1,3 +1,8 @@
+> Brief d'exécution du ticket EV-06, écrit avant la décision d'architecture V2
+> du 02/09/2026 ([ADR-017](Architecture/ADR/ADR-017-pivot-tout-on-premise.md)).
+> Le service d'inférence est on-premise et n'est appelé que par l'API métier ;
+> les mentions d'Azure ci-dessous décrivent le contexte de l'époque.
+
 # EV-06 — Contrats OpenAPI gelés entre api, dashboard et predict
 
 > Brief d'exécution archivé tel que reçu. Il documente l'intention du ticket.

@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Remplacé par ADR-017 |
 | Exigences liées | NF6 |
 
 ## Contexte
@@ -49,4 +49,4 @@ l'exploitation du fichier d'état devenait un point de friction.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 — remplacé par [ADR-017](ADR-017-pivot-tout-on-premise.md) : Terraform est retiré du périmètre, il n'y a plus de cible cloud ; Ansible seul provisionne et configure la VM, le dépôt `infra` ne porte que lui.

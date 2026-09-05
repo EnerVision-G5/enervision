@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Accepté — amendé par ADR-017 |
 | Exigences liées | F4 |
 
 ## Contexte
@@ -53,4 +53,4 @@ variables, ou si des historiques bien plus longs deviennent disponibles.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 ([ADR-017](ADR-017-pivot-tout-on-premise.md)) — la décision est inchangée ; MLflow matérialise la promotion des modèles entre entraînement et inférence sur la même VM, il n'y a plus de passage vers Azure. Le serveur MLflow et ses artefacts (Garage) sont on-premise.

@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté (consensus) |
+| Statut | Remplacé par ADR-017 |
 | Exigences liées | NF7, NF8, NF9 |
 
 ## Contexte
@@ -45,4 +45,4 @@ latence du lien inter-environnements deviennent bloquants.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 — remplacé par [ADR-017](ADR-017-pivot-tout-on-premise.md) : l'architecture est intégralement on-premise sur la VM de l'école ; la frontière de résidence des données est portée à son maximum, plus rien ne sort du périmètre.
