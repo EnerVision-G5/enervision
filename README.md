@@ -45,16 +45,57 @@ que le code s'écarte du contrat gelé.
 
 ## Intégration continue
 
-`.github/workflows/ci.yml` s'exécute à chaque push et sur chaque pull request
-(critère EV-02) :
+`.github/workflows/ci.yml` s'exécute sur chaque pull request, et sur `develop`
+et `master` après fusion. Un seul job, qui vérifie deux choses :
 
-- checkout avec `submodules: recursive` pour voir l'arborescence complète ;
-- `git submodule status --recursive` pour tracer les pointeurs ;
-- lint de la documentation Markdown du repo parent (`markdownlint-cli2`).
+- **les submodules sont récupérables** : `git submodule update --init
+  --recursive` doit réussir sur les quatre pointeurs. Un pointeur vers un
+  commit qui n'existe plus sur le dépôt de service (branche supprimée,
+  historique réécrit) fait échouer la CI ;
+- **la documentation Markdown du repo parent est conforme**
+  (`markdownlint-cli2`, règles dans `.markdownlint.json`).
 
-Un document Markdown non conforme fait échouer la PR. Chaque submodule porte en
-plus son propre pipeline lint / tests / build, avec un badge de statut dans son
-README.
+Chaque submodule porte en plus son propre pipeline lint / tests / build, avec
+un badge de statut dans son README.
+
+### Accès de la CI aux submodules
+
+Les quatre dépôts de service sont privés : le `GITHUB_TOKEN` du job ne peut
+pas les cloner. Le workflow lit chacun d'eux avec une **clé de déploiement en
+lecture seule**, dont la partie privée est un secret Actions du dépôt
+`enervision` :
+
+| Submodule   | Clé de déploiement posée sur | Secret Actions (sur `enervision`) |
+| ----------- | ---------------------------- | --------------------------------- |
+| `api`       | `EnerVision-G5/api`          | `SUBMODULE_SSH_KEY_API`           |
+| `dashboard` | `EnerVision-G5/dashboard`    | `SUBMODULE_SSH_KEY_DASHBOARD`     |
+| `predict`   | `EnerVision-G5/predict`      | `SUBMODULE_SSH_KEY_PREDICT`       |
+| `infra`     | `EnerVision-G5/infra`        | `SUBMODULE_SSH_KEY_INFRA`         |
+
+Une clé par dépôt, parce que GitHub n'accepte une même clé de déploiement que
+sur un seul dépôt. Une clé de déploiement plutôt qu'un jeton personnel : elle
+n'est liée à aucun compte et survit au départ d'un membre. Le workflow
+n'accorde à son jeton que `contents: read` ; les clés ne servent qu'à lire.
+
+Pour (re)générer les quatre clés, depuis un poste avec droits d'administration
+sur les cinq dépôts :
+
+```bash
+for r in api dashboard predict infra; do
+  ssh-keygen -t ed25519 -N '' -C "enervision-ci submodule $r (lecture seule)" -f "./submodule-$r"
+  gh repo deploy-key add "./submodule-$r.pub" -R "EnerVision-G5/$r" \
+    -t "enervision-ci submodules (lecture seule)"
+  gh secret set "SUBMODULE_SSH_KEY_$(echo "$r" | tr a-z A-Z)" \
+    -R EnerVision-G5/enervision < "./submodule-$r"
+  rm -P "./submodule-$r" "./submodule-$r.pub"
+done
+```
+
+`gh repo deploy-key add` pose la clé en lecture seule (l'écriture exige `-w`).
+Les fichiers privés ne servent qu'à alimenter les secrets : ils sont supprimés
+aussitôt, la CI est leur seul porteur. Une clé compromise se révoque dans
+*Settings → Deploy keys* du dépôt concerné, puis se régénère par la boucle
+ci-dessus.
 
 ## Documentation
 
