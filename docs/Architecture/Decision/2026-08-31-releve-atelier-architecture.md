@@ -1,0 +1,70 @@
+# Relevé de l'atelier de décision d'architecture — 31/08/2026
+
+| Champ | Valeur |
+| --- | --- |
+| Projet | EnerVision — Smart Energy Optimizer |
+| Groupe | G5 |
+| Date | 31/08/2026 |
+| Objet | Converger les cinq dossiers EC01 vers une architecture unique |
+| Livrables | 14 décisions actées (ADR-001 à ADR-014), 1 décision reportée (ADR-015) |
+
+## Objectif de l'atelier
+
+Chaque membre de l'équipe était arrivé avec sa propre proposition
+d'architecture (dossiers EC01). L'atelier avait pour but de trancher, sur
+chaque point structurant, une option unique partagée par l'équipe, et de
+consigner pour chacune le contexte, les options écartées et les
+conséquences — un ADR par décision, versionné avec le code.
+
+## Fil de la décision
+
+L'ordre des sujets a été imposé par leurs dépendances. Le choix
+d'infrastructure a été traité en premier parce qu'il conditionnait tous les
+autres : une fois la frontière de données posée (le brut et l'entraînement
+restent on-premise, l'inférence et le dashboard vont sur Azure), le
+placement du stockage, du ML et du dashboard découlait mécaniquement. Les
+briques applicatives (ETL, back-end, front, ML) ont été décidées ensuite,
+puis les décisions transverses (infrastructure as code, sécurité, secrets,
+organisation Git).
+
+Un seul sujet n'a pas pu être arbitré : le transport entre les deux
+environnements, faute d'éléments suffisants sur le coût réel du VPN.
+
+## Décisions actées
+
+| N° | Titre | Statut | Exigences liées |
+| --- | --- | --- | --- |
+| [ADR-001](../ADR/ADR-001-infrastructure-hybride.md) | Infrastructure hybride à frontière de données | Accepté | NF7, NF8, NF9 |
+| [ADR-002](../ADR/ADR-002-stockage-postgresql-timescaledb.md) | Stockage PostgreSQL + TimescaleDB | Accepté | F3 |
+| [ADR-003](../ADR/ADR-003-entrainement-onprem-inference-azure.md) | Entraînement on-premise, inférence sur Azure | Accepté | F4, NF9 |
+| [ADR-004](../ADR/ADR-004-dashboard-azure-static-web-apps.md) | Dashboard sur Azure Static Web Apps | Accepté | F7 |
+| [ADR-005](../ADR/ADR-005-etl-python-cron-polling-1min.md) | ETL Python + cron, polling 1 minute | Accepté | F1, F2 |
+| [ADR-006](../ADR/ADR-006-traitement-des-null.md) | Traitement des null : conservation brute + colonne imputée | Accepté | F3 |
+| [ADR-007](../ADR/ADR-007-fastapi-backend.md) | FastAPI (back-end) | Accepté | F6 |
+| [ADR-008](../ADR/ADR-008-react-recharts.md) | React + Recharts (front et dataviz) | Accepté | F7 |
+| [ADR-009](../ADR/ADR-009-auth-jwt-oauth2.md) | Authentification JWT via OAuth2 | Accepté | F6, NF1 |
+| [ADR-010](../ADR/ADR-010-xgboost-mlflow.md) | XGBoost + MLflow | Accepté | F4 |
+| [ADR-011](../ADR/ADR-011-terraform-iac.md) | Terraform (IaC) | Accepté | NF6 |
+| [ADR-012](../ADR/ADR-012-chaine-securite-grype-zap-sonarqube.md) | Chaîne sécurité Grype + OWASP ZAP + SonarQube | Accepté | NF1 |
+| [ADR-013](../ADR/ADR-013-secrets-key-vault.md) | Secrets : Azure Key Vault + fichiers env hors Git | Accepté | NF1 |
+| [ADR-014](../ADR/ADR-014-multi-repos-branches-pr.md) | Multi-repos + branches master → develop → feature, PR obligatoire | Accepté | NF5 |
+
+L'ADR-001 a été adoptée par consensus ; les autres décisions en découlent ou
+n'ont pas soulevé d'objection en séance.
+
+## Point reporté
+
+| N° | Titre | Statut | Échéance | Responsable |
+| --- | --- | --- | --- | --- |
+| [ADR-015](../ADR/ADR-015-lien-inter-environnements.md) | Lien inter-environnements (VPN / passerelle TLS) | Proposé | J4 | GL |
+
+Deux options restent en attente d'arbitrage : prototype de VPN site à site,
+ou passerelle TLS applicative si le VPN s'avère trop lourd. La fiche
+ADR-015 existe avec le statut « Proposé » et sera complétée à la décision.
+
+## Suites à donner
+
+- Compléter l'ADR-015 après le prototype VPN (échéance J4, responsable GL).
+- Ouvrir un ADR pour toute décision structurante ultérieure, et amender la
+  fiche existante plutôt que d'en créer une nouvelle quand une décision
+  n'est que révisée.

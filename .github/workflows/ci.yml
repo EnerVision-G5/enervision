@@ -1,0 +1,44 @@
+name: ci
+
+# Sur chaque pull request, et sur develop et master une fois la fusion faite :
+# le badge du README reflète l'état de la branche d'intégration, pas celui de
+# la dernière PR ouverte.
+on:
+  pull_request:
+  push:
+    branches: [develop, master]
+
+# Le jeton du job ne sert qu'à lire le dépôt parent. Les submodules sont lus
+# par des clés de déploiement, jamais par ce jeton.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Submodules récupérables et Markdown conforme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Préparer l'accès SSH aux submodules
+        env:
+          SUBMODULE_SSH_KEY_API: ${{ secrets.SUBMODULE_SSH_KEY_API }}
+          SUBMODULE_SSH_KEY_DASHBOARD: ${{ secrets.SUBMODULE_SSH_KEY_DASHBOARD }}
+          SUBMODULE_SSH_KEY_PREDICT: ${{ secrets.SUBMODULE_SSH_KEY_PREDICT }}
+          SUBMODULE_SSH_KEY_INFRA: ${{ secrets.SUBMODULE_SSH_KEY_INFRA }}
+        run: bash .github/scripts/submodule-ssh-access.sh
+
+      # Bloquant : un pointeur vers un commit qui n'existe plus sur le dépôt
+      # de service (branche supprimée, historique réécrit) fait échouer la CI.
+      - name: Récupérer les submodules aux commits épinglés
+        run: git submodule update --init --recursive
+
+      - name: État des submodules
+        run: git submodule status --recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Lint Markdown (documentation du repo parent)
+        run: npx --yes markdownlint-cli2@0.23.2 "*.md" "docs/**/*.md"

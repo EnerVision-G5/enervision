@@ -1,0 +1,2986 @@
+{
+  "components": {
+    "schemas": {
+      "AccuracyIndicatorOut": {
+        "description": "Écart entre les prévisions servies et la consommation réellement mesurée.\n\nDétecteur de dérive côté exploitation. La comparaison porte sur les\nprévisions ARCHIVÉES, c'est-à-dire celles qui ont réellement été servies,\nrécursives sur leur horizon. Ce n'est pas le même nombre que la\nsurveillance de dérive du repo predict, qui mesure l'erreur à un pas sur\nles décalages réels : celle-là juge le modèle, celle-ci juge ce que le\nclient a reçu, et elle sera toujours la moins flatteuse des deux.\n\nRègle d'appariement, publiée parce qu'elle décide du chiffre : les mesures\nsont moyennées par heure, les prévisions rattachées à l'heure de leur\nhorodatage cible. Une heure sans aucune mesure de puissance BRUTE ne forme\npas de paire — comparer une prévision à une valeur imputée mesurerait la\ndérive de l'ETL, pas celle du modèle.\n\nPas de MAPE : elle explose quand la consommation approche zéro, et une\nseule heure creuse suffirait à rendre l'indicateur illisible. Le biais\nsigné la remplace utilement, en donnant la direction de l'erreur.",
+        "properties": {
+          "bias_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Moyenne de prédit moins réel, en kilowatts. Signée à dessein : c'est elle qui dit si le modèle surestime ou sous-estime, ce qu'une erreur absolue ne peut pas dire.",
+            "title": "Bias Kw"
+          },
+          "bounded_points": {
+            "description": "Heures appariées dont la prévision portait un intervalle. within_bounds_ratio porte sur celles-là seulement.",
+            "title": "Bounded Points",
+            "type": "integer"
+          },
+          "drift": {
+            "description": "Vrai quand mae_kw dépasse drift_threshold_ratio fois mean_actual_kw. Faux quand aucune paire n'existe : rien n'a été mesuré, ce n'est pas une absence de dérive mais elle ne doit pas être annoncée.",
+            "title": "Drift",
+            "type": "boolean"
+          },
+          "drift_threshold_ratio": {
+            "description": "Rapport toléré entre l'erreur et la consommation moyenne, servi ici pour que le dashboard ne le redéclare pas.",
+            "title": "Drift Threshold Ratio",
+            "type": "number"
+          },
+          "mae_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Erreur absolue moyenne en kilowatts. La MAE plutôt que la RMSE : elle s'exprime dans l'unité du compteur, ce qui se discute avec un exploitant.",
+            "title": "Mae Kw"
+          },
+          "mean_actual_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Consommation réelle moyenne sur les heures appariées, en kilowatts. Sert de référence à drift : une erreur ne se juge pas en valeur absolue.",
+            "title": "Mean Actual Kw"
+          },
+          "model_versions": {
+            "description": "Versions de modèle ayant produit les prévisions comparées, triées. Plus d'une entrée signale une fenêtre à cheval sur une promotion : l'écart mêle alors deux modèles.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Model Versions",
+            "type": "array"
+          },
+          "paired_points": {
+            "description": "Heures pour lesquelles une prévision et une mesure brute existent toutes deux. Zéro rend les autres champs nuls, et c'est le cas courant tant qu'aucune prévision n'est archivée.",
+            "title": "Paired Points",
+            "type": "integer"
+          },
+          "window_end": {
+            "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          },
+          "within_bounds_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Part des mesures tombant dans l'intervalle de confiance annoncé, entre 0 et 1. Nulle quand aucune prévision appariée ne porte de bornes.",
+            "title": "Within Bounds Ratio"
+          }
+        },
+        "required": [
+          "window_start",
+          "window_end",
+          "model_versions",
+          "paired_points",
+          "mae_kw",
+          "bias_kw",
+          "mean_actual_kw",
+          "within_bounds_ratio",
+          "bounded_points",
+          "drift",
+          "drift_threshold_ratio"
+        ],
+        "title": "AccuracyIndicatorOut",
+        "type": "object"
+      },
+      "AlertOut": {
+        "description": "Alerte énergétique, miroir de l'alerte de l'API Mock IoT.\n\n`timestamp` date le déclenchement côté source, pas la collecte. Les deux\ns'écartent dès qu'un collecteur a été arrêté, et c'est le déclenchement\nqui intéresse le consommateur.",
+        "properties": {
+          "alert_id": {
+            "description": "Identifiant technique de l'alerte.",
+            "title": "Alert Id",
+            "type": "string"
+          },
+          "message": {
+            "description": "Description de l'alerte fournie par la source.",
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "description": "Gravité de l'alerte.",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "site_id": {
+            "description": "Identifiant du site concerné par l'alerte.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seuil dont le dépassement a déclenché l'alerte, nul si non servi.",
+            "title": "Threshold"
+          },
+          "timestamp": {
+            "description": "Horodatage de déclenchement, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "type": {
+            "description": "Nature de l'anomalie détectée.",
+            "enum": [
+              "spike",
+              "threshold",
+              "anomaly",
+              "outage",
+              "sensor"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Valeur mesurée ayant déclenché l'alerte, nulle si non servie.",
+            "title": "Value"
+          }
+        },
+        "required": [
+          "alert_id",
+          "timestamp",
+          "site_id",
+          "severity",
+          "type",
+          "message"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "Body_create_token_api_v1_auth_token_post": {
+        "properties": {
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          },
+          "grant_type": {
+            "anyOf": [
+              {
+                "pattern": "^password$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string"
+          },
+          "scope": {
+            "default": "",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_create_token_api_v1_auth_token_post",
+        "type": "object"
+      },
+      "CollectorStateOut": {
+        "description": "Ce que le collecteur dit de lui-même pour un site.\n\nNul quand aucune ligne n'existe : le collecteur n'a jamais tourné sur ce\nsite, ou la migration `06_ingestion_etat.sql` n'est pas appliquée. Les\ndeux se disent « je ne sais pas », jamais « tout va bien ».",
+        "properties": {
+          "consecutive_failures": {
+            "description": "Échecs consécutifs depuis le dernier succès. Remis à zéro par un succès : il distingue l'à-coup de la panne installée.",
+            "title": "Consecutive Failures",
+            "type": "integer"
+          },
+          "last_attempt_at": {
+            "description": "Dernier essai de collecte, abouti ou non, ISO 8601 UTC. Comparé à last_success_at : égaux, la collecte va bien ; écartés, elle tourne et échoue.",
+            "format": "date-time",
+            "title": "Last Attempt At",
+            "type": "string"
+          },
+          "last_data_lag_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Âge de la mesure servie par la source au dernier essai abouti, mesuré par le collecteur. Distinct de ingestion_lag_seconds, qui mesure le retard de l'écriture.",
+            "title": "Last Data Lag Seconds"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Cause du dernier échec. Conservée après un succès : savoir de quoi un site relève a une valeur.",
+            "title": "Last Error"
+          },
+          "last_rows": {
+            "description": "Lignes soumises par le dernier essai abouti. Zéro est une réponse valable : la source a répondu, elle n'avait rien de nouveau.",
+            "title": "Last Rows",
+            "type": "integer"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dernier essai abouti, ISO 8601 UTC. Nul tant qu'aucun n'a réussi.",
+            "title": "Last Success At"
+          },
+          "source": {
+            "description": "Point d'entrée ayant écrit cet état : poller pour la collecte continue, backfill pour un rattrapage manuel.",
+            "enum": [
+              "poller",
+              "backfill"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "last_attempt_at",
+          "last_success_at",
+          "last_rows",
+          "last_data_lag_seconds",
+          "consecutive_failures",
+          "last_error",
+          "source"
+        ],
+        "title": "CollectorStateOut",
+        "type": "object"
+      },
+      "EnergyReadingOut": {
+        "description": "Mesure énergétique horodatée.\n\nReprend tous les champs de l'EnergyReading source, complétés par les\ncolonnes d'imputation propres à notre base TimescaleDB.",
+        "properties": {
+          "consumption_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puissance instantanée mesurée en kilowatts, nulle si absente de la source.",
+            "title": "Consumption Kw"
+          },
+          "consumption_kw_imputed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puissance imputée en kilowatts, calculée par l'ETL. Jamais confondue avec consumption_kw qui reste la valeur brute de la source.",
+            "title": "Consumption Kw Imputed"
+          },
+          "consumption_kwh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Énergie consommée sur le pas de temps en kilowattheures.",
+            "title": "Consumption Kwh"
+          },
+          "current_a": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intensité mesurée en ampères.",
+            "title": "Current A"
+          },
+          "data_quality": {
+            "description": "Qualité de la mesure telle que qualifiée par la source.",
+            "enum": [
+              "good",
+              "partial",
+              "degraded",
+              "critical"
+            ],
+            "title": "Data Quality",
+            "type": "string"
+          },
+          "excluded": {
+            "default": false,
+            "description": "Vrai si la mesure a été écartée des calculs agrégés. Une mesure écartée reste servie telle quelle : c'est le consommateur qui décide de la retirer de ses moyennes, pas l'API de la cacher.",
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "exclusion_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Motif de la mise à l'écart, nul si la mesure n'est pas écartée. Distinct de null_reasons, qui dit ce qui manquait à la mesure là où celui-ci dit pourquoi elle a été jugée inexploitable.",
+            "title": "Exclusion Reason"
+          },
+          "humidity_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Humidité relative relevée en pourcentage.",
+            "title": "Humidity Percent"
+          },
+          "imputation_method": {
+            "description": "Méthode d'imputation appliquée : none si la mesure brute est exploitable, locf pour un report de la dernière valeur connue, interpolation sinon.",
+            "enum": [
+              "none",
+              "locf",
+              "interpolation"
+            ],
+            "title": "Imputation Method",
+            "type": "string"
+          },
+          "null_reasons": {
+            "description": "Motifs fournis par la source pour chaque champ absent de la mesure.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Null Reasons",
+            "type": "array"
+          },
+          "power_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Facteur de puissance mesuré.",
+            "title": "Power Factor"
+          },
+          "site_id": {
+            "description": "Identifiant du site auquel la mesure appartient.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "site_type": {
+            "description": "Catégorie du site, dénormalisée depuis le site.",
+            "title": "Site Type",
+            "type": "string"
+          },
+          "temperature_celsius": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Température ambiante relevée en degrés Celsius.",
+            "title": "Temperature Celsius"
+          },
+          "timestamp": {
+            "description": "Horodatage de la mesure, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "voltage_v": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tension mesurée en volts.",
+            "title": "Voltage V"
+          }
+        },
+        "required": [
+          "timestamp",
+          "site_id",
+          "site_type",
+          "consumption_kw",
+          "consumption_kwh",
+          "voltage_v",
+          "current_a",
+          "power_factor",
+          "temperature_celsius",
+          "humidity_percent",
+          "null_reasons",
+          "data_quality",
+          "consumption_kw_imputed",
+          "imputation_method"
+        ],
+        "title": "EnergyReadingOut",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "description": "Corps de réponse commun à toutes les erreurs de l'API.",
+        "properties": {
+          "detail": {
+            "description": "Message d'erreur destiné au consommateur de l'API.",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HealthOut": {
+        "description": "État de disponibilité de l'API.\n\nLe brief décrit un dict {status, timestamp} : il est typé ici pour\nrespecter la convention de projet (description sur chaque champ, valeurs\nfermées en Literal) et pour que le dashboard en dérive un type utilisable.",
+        "properties": {
+          "status": {
+            "const": "ok",
+            "description": "Statut de l'API, ok si elle répond.",
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "description": "Horodatage de la réponse, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "IngestionIndicatorOut": {
+        "description": "Fraîcheur de la dernière ingestion d'un site.\n\nDeux horloges, et il faut les deux. L'âge de la mesure dit si la donnée\ndécrit encore le présent. Le retard d'écriture dit si la chaîne suit. Un\ncollecteur arrêté et un collecteur qui rattrape du retard donnent la même\nvaleur sur la première et deux valeurs très différentes sur la seconde.",
+        "properties": {
+          "collector": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectorStateOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "État que le collecteur publie pour ce site. Nul quand il n'a jamais tourné dessus : c'est la seule chose que les mesures ne peuvent pas dire, un collecteur arrêté n'écrivant aucune ligne."
+          },
+          "ingestion_lag_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Délai entre la mesure la plus récente et son écriture en base, en secondes. Mesure ce que la chaîne a mis à la charger, pas ce que la source a mis à la servir.",
+            "title": "Ingestion Lag Seconds"
+          },
+          "is_stale": {
+            "description": "Vrai quand la mesure la plus récente dépasse le seuil, ou quand le site n'a aucune mesure. Un âge inconnu n'est jamais tenu pour frais.",
+            "title": "Is Stale",
+            "type": "boolean"
+          },
+          "last_ingested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Horodatage de la dernière écriture en base, ISO 8601 UTC. Peut être bien postérieur à last_measure_at après un rattrapage.",
+            "title": "Last Ingested At"
+          },
+          "last_measure_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Horodatage de la mesure la plus récente du site, ISO 8601 UTC. Nul quand le site n'a aucune mesure.",
+            "title": "Last Measure At"
+          },
+          "measure_age_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Âge de la mesure la plus récente au moment de la réponse, en secondes.",
+            "title": "Measure Age Seconds"
+          },
+          "stale_threshold_seconds": {
+            "description": "Seuil au-delà duquel l'ingestion est tenue pour en retard, servi ici pour que le dashboard ne le redéclare pas.",
+            "title": "Stale Threshold Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "last_measure_at",
+          "last_ingested_at",
+          "measure_age_seconds",
+          "ingestion_lag_seconds",
+          "is_stale",
+          "stale_threshold_seconds",
+          "collector"
+        ],
+        "title": "IngestionIndicatorOut",
+        "type": "object"
+      },
+      "ModelOut": {
+        "description": "Modèle du registre, miroir applicatif du Model Registry MLflow.\n\nAlimenté par le service d'entraînement à chaque promotion, jamais par\nl'API. `actif` désigne la version servie : il en existe au plus une, et\nc'est elle qui fonde les prévisions et les recommandations.",
+        "properties": {
+          "actif": {
+            "description": "Vrai pour la version actuellement promue.",
+            "title": "Actif",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Entrée de la ligne dans le registre, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "date_entrainement": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Horodatage du run d'entraînement, ISO 8601 UTC. Distinct de created_at, qui date l'entrée de la ligne dans le registre.",
+            "title": "Date Entrainement"
+          },
+          "mlflow_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Run MLflow ayant produit le modèle, pour la traçabilité.",
+            "title": "Mlflow Run Id"
+          },
+          "modele_id": {
+            "description": "Identifiant technique du modèle.",
+            "title": "Modele Id",
+            "type": "integer"
+          },
+          "nom": {
+            "description": "Nom du modèle, par exemple enervision_xgboost.",
+            "title": "Nom",
+            "type": "string"
+          },
+          "version": {
+            "description": "Version, telle que le registre MLflow la nomme.",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "modele_id",
+          "nom",
+          "version",
+          "actif",
+          "created_at"
+        ],
+        "title": "ModelOut",
+        "type": "object"
+      },
+      "PaginationMeta": {
+        "description": "Métadonnées de pagination accompagnant toute collection paginée.",
+        "properties": {
+          "limit": {
+            "description": "Taille de page demandée, entre 1 et 1000 (défaut 100).",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Décalage appliqué au début de la collection.",
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Nombre total d'éléments disponibles pour la requête.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "PaginationMeta",
+        "type": "object"
+      },
+      "PredictionPointOut": {
+        "description": "Point prédit, tel qu'il a été archivé.",
+        "properties": {
+          "generated_at": {
+            "description": "Horodatage de production de la prévision par le service d'inférence, ISO 8601 UTC. Distinct de l'horodatage cible.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "lower_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne basse de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Lower Bound Kw"
+          },
+          "model_version": {
+            "description": "Version du modèle ayant produit ce point.",
+            "title": "Model Version",
+            "type": "string"
+          },
+          "predicted_consumption_kw": {
+            "description": "Puissance prédite en kilowatts.",
+            "title": "Predicted Consumption Kw",
+            "type": "number"
+          },
+          "timestamp": {
+            "description": "Horodatage cible de la prévision, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "upper_bound_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Borne haute de l'intervalle de confiance, nulle si non calculée.",
+            "title": "Upper Bound Kw"
+          }
+        },
+        "required": [
+          "timestamp",
+          "predicted_consumption_kw",
+          "lower_bound_kw",
+          "upper_bound_kw",
+          "model_version",
+          "generated_at"
+        ],
+        "title": "PredictionPointOut",
+        "type": "object"
+      },
+      "PredictionsPage": {
+        "description": "Page de prédictions accompagnée de ses métadonnées.",
+        "properties": {
+          "items": {
+            "description": "Prédictions de la page, triées par horodatage cible croissant.",
+            "items": {
+              "$ref": "#/components/schemas/PredictionPointOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "description": "Métadonnées de pagination de la requête."
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "PredictionsPage",
+        "type": "object"
+      },
+      "QualityIndicatorOut": {
+        "description": "Part de mesures dégradées d'un site sur la fenêtre.\n\n« Dégradée » est la définition de l'ETL, pas une seconde définition écrite\nici : une mesure est dégradée quand la source ou l'ETL l'a qualifiée\n`degraded` ou `critical`, quand sa valeur a dû être reconstruite, ou quand\nses motifs d'absence nomment une panne capteur. L'API compte, elle ne juge\npas.\n\nUne mesure écartée par un analyste (`mesure_exclu`) n'entre PAS dans ce\ncompte : l'exclusion est un jugement humain sur une valeur aberrante, la\ndégradation est un fait capteur. Les confondre rendrait le chiffre\nindéfendable en recette.",
+        "properties": {
+          "degraded": {
+            "description": "Mesures dégradées au sens de l'ETL, voir la description du modèle.",
+            "title": "Degraded",
+            "type": "integer"
+          },
+          "degraded_ratio": {
+            "description": "Part de mesures dégradées, entre 0 et 1. Vaut 0 sur une fenêtre vide, que qualified_ratio permet alors de distinguer d'une fenêtre saine.",
+            "title": "Degraded Ratio",
+            "type": "number"
+          },
+          "exceeds_threshold": {
+            "description": "Vrai quand degraded_ratio atteint le seuil.",
+            "title": "Exceeds Threshold",
+            "type": "boolean"
+          },
+          "imputed": {
+            "description": "Mesures dont la valeur a été reconstruite par l'ETL.",
+            "title": "Imputed",
+            "type": "integer"
+          },
+          "not_good": {
+            "description": "Mesures dont data_quality n'est pas good.",
+            "title": "Not Good",
+            "type": "integer"
+          },
+          "qualified": {
+            "description": "Mesures dont la qualification a été posée par l'ETL et non laissée au défaut de la base.",
+            "title": "Qualified",
+            "type": "integer"
+          },
+          "qualified_ratio": {
+            "description": "Part de la fenêtre réellement qualifiée, entre 0 et 1. Le chiffre le plus important du bloc : data_quality vaut good par défaut, et une fenêtre non encore traitée par l'ETL affiche donc 0 % de dégradation sans que cela veuille dire qu'elle est saine.",
+            "title": "Qualified Ratio",
+            "type": "number"
+          },
+          "sensor_failure": {
+            "description": "Mesures dont les motifs d'absence nomment une panne capteur, dans le vocabulaire de la source (*_sensor_failure) comme dans celui de l'ETL (*:undeclared).",
+            "title": "Sensor Failure",
+            "type": "integer"
+          },
+          "threshold": {
+            "description": "Part au-delà de laquelle la fiabilité du site est tenue pour compromise, servie ici pour que le dashboard ne la redéclare pas.",
+            "title": "Threshold",
+            "type": "number"
+          },
+          "total": {
+            "description": "Mesures du site sur la fenêtre.",
+            "title": "Total",
+            "type": "integer"
+          },
+          "window_end": {
+            "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          },
+          "window_start": {
+            "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Window Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window_start",
+          "window_end",
+          "total",
+          "degraded",
+          "degraded_ratio",
+          "threshold",
+          "exceeds_threshold",
+          "not_good",
+          "imputed",
+          "sensor_failure",
+          "qualified",
+          "qualified_ratio"
+        ],
+        "title": "QualityIndicatorOut",
+        "type": "object"
+      },
+      "ReadingsPage": {
+        "description": "Page de mesures énergétiques accompagnée de ses métadonnées.",
+        "properties": {
+          "items": {
+            "description": "Mesures de la page, triées par horodatage croissant.",
+            "items": {
+              "$ref": "#/components/schemas/EnergyReadingOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "description": "Métadonnées de pagination de la requête."
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ],
+        "title": "ReadingsPage",
+        "type": "object"
+      },
+      "RecommendationOut": {
+        "description": "Action proposée sur un site, à partir de sa prévision.\n\n`message` est prêt à afficher, mais les champs structurés à côté de lui ne\nsont pas décoratifs : un dashboard qui devrait extraire une heure d'une\nphrase française serait cassé par la première reformulation.",
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Instant précis visé, ISO 8601 UTC. Renseigné quand l'action porte sur un point et non sur une plage — un délestage, par exemple.",
+            "title": "At"
+          },
+          "message": {
+            "description": "Formulation prête à afficher.",
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "description": "Urgence de l'action, sur l'échelle des alertes.",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "type": {
+            "description": "Nature de l'action proposée.",
+            "enum": [
+              "predicted_peak",
+              "capacity_overrun",
+              "sensor_failure"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "value_kw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Grandeur en kilowatts attachée à l'action : puissance à délester, ou pointe prévue selon la nature.",
+            "title": "Value Kw"
+          },
+          "window_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fin de la fenêtre concernée, ISO 8601 UTC.",
+            "title": "Window End"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Début de la fenêtre concernée, ISO 8601 UTC. Nul pour une recommandation qui ne porte pas sur une plage.",
+            "title": "Window Start"
+          }
+        },
+        "required": [
+          "type",
+          "severity",
+          "message"
+        ],
+        "title": "RecommendationOut",
+        "type": "object"
+      },
+      "RecommendationsOut": {
+        "description": "Recommandations d'un site, et de quoi elles ont été tirées.\n\n`detail` porte la raison d'une liste vide, et ce n'est pas un luxe : « rien\nà signaler » et « aucune prévision disponible » se ressemblent au point\nd'être confondus, alors que le premier rassure et le second doit inquiéter.",
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Raison d'une liste vide, nulle quand des actions sont servies.",
+            "title": "Detail"
+          },
+          "generated_at": {
+            "description": "Horodatage du calcul, ISO 8601 UTC. Rien n'est archivé.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "horizon_hours": {
+            "description": "Profondeur de la fenêtre de prévision examinée, en heures.",
+            "title": "Horizon Hours",
+            "type": "integer"
+          },
+          "items": {
+            "description": "Actions proposées, de la plus urgente à la moins urgente.",
+            "items": {
+              "$ref": "#/components/schemas/RecommendationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version du modèle ayant produit les prévisions examinées. Nulle quand aucune prévision n'a été trouvée. Un conseil ne vaut que ce que vaut le modèle qui le fonde.",
+            "title": "Model Version"
+          },
+          "site_id": {
+            "description": "Site pour lequel les actions sont proposées.",
+            "title": "Site Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "generated_at",
+          "horizon_hours",
+          "items"
+        ],
+        "title": "RecommendationsOut",
+        "type": "object"
+      },
+      "SensorFailureOut": {
+        "description": "Épisode de panne d'un capteur, borné par son début et sa fin.\n\n`started_at` est l'instant où le collecteur a CONSTATÉ la panne, pas celui\noù elle a commencé : la source dit `failing` au présent, jamais depuis\nquand. Un collecteur arrêté décale donc ce début, et le confondre avec le\ndébut réel ferait passer une interruption de collecte pour un capteur sain.",
+        "properties": {
+          "capteur": {
+            "description": "Capteur tombé en panne.",
+            "enum": [
+              "consumption",
+              "electrical",
+              "temperature",
+              "humidity",
+              "network"
+            ],
+            "title": "Capteur",
+            "type": "string"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Constat du rétablissement, nul tant que la panne dure.",
+            "title": "Ended At"
+          },
+          "failing_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Dernière date de rétablissement annoncée par la source pendant l'épisode. Une prévision, pas un constat : elle peut être dépassée alors que la panne dure encore.",
+            "title": "Failing Until"
+          },
+          "ongoing": {
+            "description": "Vrai tant que le collecteur n'a pas constaté le retour à ok.",
+            "title": "Ongoing",
+            "type": "boolean"
+          },
+          "site_id": {
+            "description": "Identifiant du site concerné.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "started_at": {
+            "description": "Constat de la panne par le collecteur, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "capteur",
+          "started_at",
+          "ongoing"
+        ],
+        "title": "SensorFailureOut",
+        "type": "object"
+      },
+      "SensorHealthOut": {
+        "description": "État d'un capteur d'un site, tel que la source le déclare.\n\nComplète `null_reasons` sans le remplacer : celui-ci dit ce qui manquait à\nune mesure, celui-là dit quel capteur est en cause et jusqu'à quand la\nsource annonce qu'il le restera. Un capteur qui tombe entre deux mesures\nn'apparaît que dans le second.",
+        "properties": {
+          "capteur": {
+            "description": "Capteur décrit.",
+            "enum": [
+              "consumption",
+              "electrical",
+              "temperature",
+              "humidity",
+              "network"
+            ],
+            "title": "Capteur",
+            "type": "string"
+          },
+          "failing_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date de rétablissement annoncée par la source, nulle quand le capteur fonctionne.",
+            "title": "Failing Until"
+          },
+          "overall": {
+            "description": "Synthèse du site : ok si tous les capteurs répondent, degraded si l'un d'eux est tombé, critical en cas de perte réseau.",
+            "enum": [
+              "ok",
+              "degraded",
+              "critical"
+            ],
+            "title": "Overall",
+            "type": "string"
+          },
+          "releve_le": {
+            "description": "Dernier passage du collecteur sur cet état, ISO 8601 UTC. Un état ancien dit que la collecte s'est tue, pas que le capteur va bien.",
+            "format": "date-time",
+            "title": "Releve Le",
+            "type": "string"
+          },
+          "site_id": {
+            "description": "Identifiant du site concerné.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "statut": {
+            "description": "État du capteur : ok ou failing.",
+            "enum": [
+              "ok",
+              "failing"
+            ],
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "capteur",
+          "statut",
+          "overall",
+          "releve_le"
+        ],
+        "title": "SensorHealthOut",
+        "type": "object"
+      },
+      "SiteIndicatorsOut": {
+        "description": "Les trois indicateurs de confiance d'un site, à un instant donné.",
+        "properties": {
+          "accuracy": {
+            "$ref": "#/components/schemas/AccuracyIndicatorOut",
+            "description": "Écart entre prévisions servies et consommation réelle."
+          },
+          "generated_at": {
+            "description": "Horodatage du calcul, ISO 8601 UTC. C'est lui qui sert de présent aux âges publiés.",
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "ingestion": {
+            "$ref": "#/components/schemas/IngestionIndicatorOut",
+            "description": "Fraîcheur de la dernière ingestion."
+          },
+          "quality": {
+            "$ref": "#/components/schemas/QualityIndicatorOut",
+            "description": "Part de mesures dégradées sur la fenêtre."
+          },
+          "site_id": {
+            "description": "Identifiant du site décrit.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "window_hours": {
+            "description": "Profondeur de la fenêtre sur laquelle les parts sont calculées.",
+            "title": "Window Hours",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "site_id",
+          "generated_at",
+          "window_hours",
+          "ingestion",
+          "quality",
+          "accuracy"
+        ],
+        "title": "SiteIndicatorsOut",
+        "type": "object"
+      },
+      "SiteOut": {
+        "description": "Site industriel supervisé, miroir du site de l'API Mock IoT.",
+        "properties": {
+          "capacity_kw": {
+            "description": "Puissance souscrite du site en kilowatts.",
+            "title": "Capacity Kw",
+            "type": "number"
+          },
+          "location": {
+            "description": "Localisation géographique du site.",
+            "title": "Location",
+            "type": "string"
+          },
+          "site_id": {
+            "description": "Identifiant technique du site.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "site_name": {
+            "description": "Libellé du site affiché dans le dashboard.",
+            "title": "Site Name",
+            "type": "string"
+          },
+          "site_type": {
+            "description": "Catégorie de site, par exemple usine ou entrepôt.",
+            "title": "Site Type",
+            "type": "string"
+          },
+          "status": {
+            "description": "État d'exploitation du site remonté par la source.",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "site_type",
+          "site_name",
+          "location",
+          "capacity_kw",
+          "status"
+        ],
+        "title": "SiteOut",
+        "type": "object"
+      },
+      "SiteSyncOut": {
+        "description": "Résultat d'une synchronisation du référentiel depuis la source.\n\n`synchronized` compte les lignes écrites, pas les sites servis : une\nsource qui décrit incomplètement un site le voit écarté, et l'écart entre\nles deux nombres est ce qui le signale.",
+        "properties": {
+          "received": {
+            "description": "Nombre de sites servis par la source.",
+            "title": "Received",
+            "type": "integer"
+          },
+          "sites": {
+            "description": "Référentiel complet après synchronisation, trié par identifiant.",
+            "items": {
+              "$ref": "#/components/schemas/SiteOut"
+            },
+            "title": "Sites",
+            "type": "array"
+          },
+          "synchronized": {
+            "description": "Nombre de sites écrits en base.",
+            "title": "Synchronized",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "synchronized",
+          "received",
+          "sites"
+        ],
+        "title": "SiteSyncOut",
+        "type": "object"
+      },
+      "SpikeSimulationOut": {
+        "description": "Pic de consommation déclenché sur la source, et ce qu'il a donné.\n\n`consumption_kw_constatee` est la valeur relue juste après le\ndéclenchement. Elle est nulle quand la source a accepté le pic puis s'est\ntue : le pic a quand même eu lieu, et le dire en échec inviterait à\nrejouer l'appel, donc à superposer deux pics.",
+        "properties": {
+          "consumption_kw_constatee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Puissance relue juste après le pic, nulle si la source s'est tue.",
+            "title": "Consumption Kw Constatee"
+          },
+          "data_quality_constatee": {
+            "anyOf": [
+              {
+                "enum": [
+                  "good",
+                  "partial",
+                  "degraded",
+                  "critical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Qualification de la mesure relue, nulle si la source s'est tue.",
+            "title": "Data Quality Constatee"
+          },
+          "declenche_le": {
+            "description": "Horodatage du déclenchement, ISO 8601 UTC.",
+            "format": "date-time",
+            "title": "Declenche Le",
+            "type": "string"
+          },
+          "declenche_par": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Utilisateur ayant déclenché le pic, nul si l'authentification est désactivée.",
+            "title": "Declenche Par"
+          },
+          "duration_minutes": {
+            "description": "Durée demandée du pic, en minutes.",
+            "title": "Duration Minutes",
+            "type": "integer"
+          },
+          "evenement": {
+            "description": "Nature de l'événement déclenché, consumption_spike.",
+            "title": "Evenement",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Message rendu par la source, lisible tel quel.",
+            "title": "Message"
+          },
+          "simulation_id": {
+            "description": "Identifiant de la simulation archivée.",
+            "title": "Simulation Id",
+            "type": "integer"
+          },
+          "site_id": {
+            "description": "Site sur lequel le pic a été déclenché.",
+            "title": "Site Id",
+            "type": "string"
+          },
+          "statut": {
+            "description": "Statut rendu par la source, simulated en cas de succès.",
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "simulation_id",
+          "site_id",
+          "duration_minutes",
+          "statut",
+          "evenement",
+          "declenche_le"
+        ],
+        "title": "SpikeSimulationOut",
+        "type": "object"
+      },
+      "TokenResponse": {
+        "description": "Jeton JWT délivré par le flux OAuth2 password.",
+        "properties": {
+          "access_token": {
+            "description": "Jeton JWT à placer dans l'en-tête Authorization.",
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Durée de validité du jeton en secondes.",
+            "exclusiveMinimum": 0.0,
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "token_type": {
+            "const": "bearer",
+            "description": "Schéma d'authentification à utiliser, toujours bearer.",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ],
+        "title": "TokenResponse",
+        "type": "object"
+      },
+      "UserOut": {
+        "description": "Utilisateur authentifié tel qu'exposé par l'API.",
+        "properties": {
+          "role": {
+            "description": "Rôle applicatif : reader en lecture seule, writer en écriture.",
+            "enum": [
+              "reader",
+              "writer"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "description": "Identifiant de connexion de l'utilisateur.",
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "role"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/token"
+          }
+        },
+        "type": "oauth2"
+      }
+    }
+  },
+  "info": {
+    "description": "Contrat de l'API métier on-premise : sites, mesures énergétiques et alertes, servis sous JWT. Les endpoints non triviaux renvoient 501 tant que leur ticket d'implémentation n'est pas livré.",
+    "title": "EnerVision API métier",
+    "version": "1.5.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/alerts": {
+      "get": {
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "description": "Restreindre aux alertes de ce site.",
+            "in": "query",
+            "name": "site_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux alertes de ce site.",
+              "title": "Site Id"
+            }
+          },
+          {
+            "description": "Restreindre aux alertes de cette gravité.",
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux alertes de cette gravité.",
+              "title": "Severity"
+            }
+          },
+          {
+            "description": "Restreindre aux alertes de cette nature.",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "spike",
+                    "threshold",
+                    "anomaly",
+                    "outage",
+                    "sensor"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux alertes de cette nature.",
+              "title": "Type"
+            }
+          },
+          {
+            "description": "Borne inférieure incluse du déclenchement, ISO 8601.",
+            "in": "query",
+            "name": "start_time",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Borne inférieure incluse du déclenchement, ISO 8601.",
+              "title": "Start Time"
+            }
+          },
+          {
+            "description": "Borne supérieure incluse du déclenchement, ISO 8601.",
+            "in": "query",
+            "name": "end_time",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Borne supérieure incluse du déclenchement, ISO 8601.",
+              "title": "End Time"
+            }
+          },
+          {
+            "description": "Taille de page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Taille de page.",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlertOut"
+                  },
+                  "title": "Response List Alerts Api V1 Alerts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les alertes énergétiques",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/auth/token": {
+      "post": {
+        "description": "Déclare le flux OAuth2 password dans la spécification.\n\nform_data porte le contrat d'entrée (username, password, scope) sans être\nexploité : la délivrance réelle du jeton est le périmètre d'EV-12.",
+        "operationId": "create_token_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_token_api_v1_auth_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Identifiants invalides."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "summary": "Obtenir un jeton JWT (flux OAuth2 password)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "description": "Endpoint trivial, réellement implémenté : aucune dépendance externe.",
+        "operationId": "get_health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Vérifier la disponibilité de l'API",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/indicators": {
+      "get": {
+        "operationId": "list_indicators_api_v1_indicators_get",
+        "parameters": [
+          {
+            "description": "Profondeur de la fenêtre en heures, entre 1 et 168 (défaut 24).",
+            "in": "query",
+            "name": "window_hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "description": "Profondeur de la fenêtre en heures, entre 1 et 168 (défaut 24).",
+              "maximum": 168,
+              "minimum": 1,
+              "title": "Window Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SiteIndicatorsOut"
+                  },
+                  "title": "Response List Indicators Api V1 Indicators Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les indicateurs de confiance de tous les sites",
+        "tags": [
+          "indicators"
+        ]
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "operationId": "list_models_api_v1_models_get",
+        "parameters": [
+          {
+            "description": "Restreindre aux versions de ce modèle.",
+            "in": "query",
+            "name": "nom",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux versions de ce modèle.",
+              "title": "Nom"
+            }
+          },
+          {
+            "description": "Vrai pour les seules versions promues.",
+            "in": "query",
+            "name": "actif",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vrai pour les seules versions promues.",
+              "title": "Actif"
+            }
+          },
+          {
+            "description": "Nombre maximal de modèles rendus.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Nombre maximal de modèles rendus.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelOut"
+                  },
+                  "title": "Response List Models Api V1 Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les modèles du registre",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/models/current": {
+      "get": {
+        "operationId": "get_current_model_api_v1_models_current_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Aucun modèle n'est promu."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Consulter le modèle actuellement promu",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/api/v1/simulations/spike": {
+      "get": {
+        "operationId": "list_spikes_api_v1_simulations_spike_get",
+        "parameters": [
+          {
+            "description": "Restreindre aux pics de ce site.",
+            "in": "query",
+            "name": "site_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux pics de ce site.",
+              "title": "Site Id"
+            }
+          },
+          {
+            "description": "Nombre maximal de pics rendus.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Nombre maximal de pics rendus.",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SpikeSimulationOut"
+                  },
+                  "title": "Response List Spikes Api V1 Simulations Spike Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les pics de consommation simulés",
+        "tags": [
+          "simulations"
+        ]
+      }
+    },
+    "/api/v1/simulations/spike/{site_id}": {
+      "post": {
+        "operationId": "trigger_spike_api_v1_simulations_spike__site_id__post",
+        "parameters": [
+          {
+            "description": "Identifiant du site cible.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site cible.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Durée du pic simulé, en minutes.",
+            "in": "query",
+            "name": "duration_minutes",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "description": "Durée du pic simulé, en minutes.",
+              "maximum": 240,
+              "minimum": 1,
+              "title": "Duration Minutes",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpikeSimulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rôle writer requis pour cette opération."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Le service d'inférence ou la source n'a pas répondu."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Déclencher un pic de consommation sur un site",
+        "tags": [
+          "simulations"
+        ]
+      }
+    },
+    "/api/v1/sites": {
+      "get": {
+        "operationId": "list_sites_api_v1_sites_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SiteOut"
+                  },
+                  "title": "Response List Sites Api V1 Sites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les sites supervisés",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/sync": {
+      "post": {
+        "operationId": "sync_sites_api_v1_sites_sync_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteSyncOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Rôle writer requis pour cette opération."
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Le service d'inférence ou la source n'a pas répondu."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Synchroniser le référentiel des sites depuis la source",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}": {
+      "get": {
+        "operationId": "get_site_api_v1_sites__site_id__get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Consulter un site",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/indicators": {
+      "get": {
+        "operationId": "get_site_indicators_api_v1_sites__site_id__indicators_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Profondeur de la fenêtre en heures, entre 1 et 168 (défaut 24).",
+            "in": "query",
+            "name": "window_hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "description": "Profondeur de la fenêtre en heures, entre 1 et 168 (défaut 24).",
+              "maximum": 168,
+              "minimum": 1,
+              "title": "Window Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteIndicatorsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Consulter les indicateurs de confiance d'un site",
+        "tags": [
+          "indicators"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/predictions": {
+      "get": {
+        "operationId": "list_predictions_api_v1_sites__site_id__predictions_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+            "in": "query",
+            "name": "start_time",
+            "required": true,
+            "schema": {
+              "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+              "format": "date-time",
+              "title": "Start Time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+            "in": "query",
+            "name": "end_time",
+            "required": true,
+            "schema": {
+              "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+              "format": "date-time",
+              "title": "End Time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Taille de page, entre 1 et 1000.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Taille de page, entre 1 et 1000.",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Décalage appliqué au début de la collection.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Décalage appliqué au début de la collection.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionsPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les prédictions d'un site sur une fenêtre de temps",
+        "tags": [
+          "predictions"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/readings": {
+      "get": {
+        "operationId": "list_readings_api_v1_sites__site_id__readings_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+            "in": "query",
+            "name": "start_time",
+            "required": true,
+            "schema": {
+              "description": "Borne inférieure incluse de la fenêtre, ISO 8601 UTC.",
+              "format": "date-time",
+              "title": "Start Time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+            "in": "query",
+            "name": "end_time",
+            "required": true,
+            "schema": {
+              "description": "Borne supérieure incluse de la fenêtre, ISO 8601 UTC.",
+              "format": "date-time",
+              "title": "End Time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Taille de page, entre 1 et 1000.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Taille de page, entre 1 et 1000.",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Décalage appliqué au début de la collection.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Décalage appliqué au début de la collection.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingsPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les mesures d'un site sur une fenêtre de temps",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/readings/latest": {
+      "get": {
+        "operationId": "get_latest_reading_api_v1_sites__site_id__readings_latest_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyReadingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Consulter la dernière mesure connue d'un site",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/recommendations": {
+      "get": {
+        "operationId": "list_recommendations_api_v1_sites__site_id__recommendations_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Profondeur de la fenêtre de prévision examinée.",
+            "in": "query",
+            "name": "horizon_hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "description": "Profondeur de la fenêtre de prévision examinée.",
+              "maximum": 168,
+              "minimum": 1,
+              "title": "Horizon Hours",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Proposer des actions à partir de la prévision d'un site",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/sensors": {
+      "get": {
+        "operationId": "list_sensors_api_v1_sites__site_id__sensors_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SensorHealthOut"
+                  },
+                  "title": "Response List Sensors Api V1 Sites  Site Id  Sensors Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Consulter l'état des capteurs d'un site",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/api/v1/sites/{site_id}/sensors/history": {
+      "get": {
+        "operationId": "list_sensor_failures_api_v1_sites__site_id__sensors_history_get",
+        "parameters": [
+          {
+            "description": "Identifiant du site.",
+            "in": "path",
+            "name": "site_id",
+            "required": true,
+            "schema": {
+              "description": "Identifiant du site.",
+              "title": "Site Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Restreindre aux pannes de ce capteur.",
+            "in": "query",
+            "name": "capteur",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restreindre aux pannes de ce capteur.",
+              "title": "Capteur"
+            }
+          },
+          {
+            "description": "Vrai pour les seules pannes en cours, faux pour les closes.",
+            "in": "query",
+            "name": "ongoing",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vrai pour les seules pannes en cours, faux pour les closes.",
+              "title": "Ongoing"
+            }
+          },
+          {
+            "description": "Nombre maximal d'épisodes rendus.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Nombre maximal d'épisodes rendus.",
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SensorFailureOut"
+                  },
+                  "title": "Response List Sensor Failures Api V1 Sites  Site Id  Sensors History Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Jeton JWT absent, expiré ou invalide."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Site inconnu."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Paramètres de requête invalides."
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Lister les pannes de capteur d'un site",
+        "tags": [
+          "sites"
+        ]
+      }
+    }
+  }
+}
