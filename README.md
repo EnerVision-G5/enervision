@@ -34,14 +34,15 @@ git submodule update --init --recursive
 
 ### Mise à jour des pointeurs
 
-Les pointeurs avancent **une fois par semaine**, par une PR ouverte
-automatiquement le lundi matin par le workflow `submodules-sync`, et à la
+Les pointeurs avancent **une fois par jour**, par une PR ouverte
+automatiquement chaque matin par le workflow `submodules-sync`, et à la
 demande avant une démo ou une livraison (*Actions → submodules-sync → Run
 workflow*). Pas à chaque merge dans un service : les quatre dépôts fusionnent
 plusieurs fois par jour, et une PR par merge noierait la relecture pour des
 pointeurs que seuls les humains consomment. Le coût est d'une minute
-d'Actions par semaine, contre plusieurs centaines par mois au rythme des
-merges.
+d'Actions par jour, contre plusieurs centaines par mois au rythme des merges.
+Un jour sans merge n'ouvre rien : le workflow s'arrête quand les pointeurs
+sont déjà à jour.
 
 Le workflow pose chaque pointeur sur la tête de la branche suivie, vérifie que
 les quatre se clonent, puis pousse la branche `submodules-sync` et ouvre ou
@@ -91,8 +92,8 @@ un badge de statut dans son README.
 
 `.github/workflows/submodules-sync.yml` avance les pointeurs de submodules et
 ouvre la PR de mise à jour (voir [Mise à jour des
-pointeurs](#mise-à-jour-des-pointeurs)). Il tourne le lundi à 06:00 UTC et à
-la demande. Deux conditions côté GitHub :
+pointeurs](#mise-à-jour-des-pointeurs)). Il tourne chaque jour à 06:00 UTC et
+à la demande. Deux conditions côté GitHub :
 
 - *Settings → Actions → General → Workflow permissions* : cocher « Allow
   GitHub Actions to create and approve pull requests », sinon `gh pr create`

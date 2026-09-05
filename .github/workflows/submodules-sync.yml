@@ -1,13 +1,14 @@
 name: submodules-sync
 
 # Avance les pointeurs de submodules sur la tête de la branche que chacun suit
-# (.gitmodules) et ouvre la PR correspondante. Hebdomadaire plutôt qu'à chaque
-# merge dans un service : les quatre dépôts fusionnent plusieurs fois par jour,
-# une PR par merge noierait la relecture pour des pointeurs que seuls les
-# humains consomment. Déclenchable à la main avant une démo ou une livraison.
+# (.gitmodules) et ouvre la PR correspondante. Une fois par jour plutôt qu'à
+# chaque merge dans un service : les quatre dépôts fusionnent plusieurs fois
+# par jour, une PR par merge noierait la relecture pour des pointeurs que seuls
+# les humains consomment. Déclenchable à la main avant une démo ou une
+# livraison.
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 # Écriture limitée à ce workflow : il pousse une branche et ouvre une PR, il ne
