@@ -475,9 +475,9 @@
     }
   },
   "info": {
-    "description": "Contrat du service de prédiction déployé sur Azure. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
+    "description": "Contrat du service de prédiction, déployé on-premise et appelé par la seule API métier. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
     "title": "EnerVision service d'inférence",
-    "version": "1.3.0"
+    "version": "1.3.1"
   },
   "openapi": "3.1.0",
   "paths": {
