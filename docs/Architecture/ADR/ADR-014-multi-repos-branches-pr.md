@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Accepté — amendé le 06/09/2026 (protection de branche) |
 | Exigences liées | NF5 |
 
 ## Contexte
@@ -56,4 +56,16 @@ leur indépendance.
 
 ## Amendements
 
-—
+06/09/2026 — point D5 du cadrage tranché — la protection de branche prévue en
+conséquence n'est **pas configurable** : les dépôts sont privés sur le plan
+GitHub gratuit de l'organisation, qui n'offre ni protection de branche ni
+rulesets (« Upgrade to GitHub Pro or make this repository public »). Les deux
+issues, rendre les dépôts publics ou passer en plan Team, sont écartées pour la
+durée du projet. La règle reste entière — aucun commit direct sur `master` ni
+`develop`, pull request et revue avant fusion — mais elle est tenue par la
+**discipline de l'équipe**, sans garde outillée : GitHub accepte techniquement
+un push direct, et chacun s'engage à ne pas le faire. Deux compensations : la
+CI de chaque dépôt se déclenche aussi sur `push` vers `develop` et `master`,
+pour qu'un commit arrivé sans PR soit au moins testé ; et un push direct
+constaté se corrige par une PR de suivi, jamais par une réécriture d'historique.
+À rouvrir si l'organisation change de plan ou si les dépôts deviennent publics.

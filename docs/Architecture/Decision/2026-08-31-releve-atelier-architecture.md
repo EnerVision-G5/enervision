@@ -52,7 +52,7 @@ environnements, faute d'éléments suffisants sur le coût réel du VPN.
 | [ADR-011](../ADR/ADR-011-terraform-iac.md) | Terraform (IaC) | Remplacé par ADR-017 | NF6 |
 | [ADR-012](../ADR/ADR-012-chaine-securite-grype-zap-sonarqube.md) | Chaîne sécurité Grype + OWASP ZAP + SonarQube | Amendé par ADR-016 | NF1 |
 | [ADR-013](../ADR/ADR-013-secrets-key-vault.md) | Secrets : Azure Key Vault + fichiers env hors Git | Remplacé par ADR-017 | NF1 |
-| [ADR-014](../ADR/ADR-014-multi-repos-branches-pr.md) | Multi-repos + branches master → develop → feature, PR obligatoire | Accepté | NF5 |
+| [ADR-014](../ADR/ADR-014-multi-repos-branches-pr.md) | Multi-repos + branches master → develop → feature, PR obligatoire | Accepté, amendé le 06/09/2026 | NF5 |
 | [ADR-016](../ADR/ADR-016-retrait-sonarqube.md) | Retrait de SonarQube de la chaîne qualité (06/09/2026) | Accepté | NF1 |
 | [ADR-017](../ADR/ADR-017-pivot-tout-on-premise.md) | Pivot tout on-premise (02/09/2026) | Accepté | NF1, NF6, NF7, NF8, NF9 |
 
