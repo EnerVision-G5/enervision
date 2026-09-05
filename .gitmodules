@@ -13,4 +13,4 @@
 [submodule "infra"]
 	path = infra
 	url = https://github.com/EnerVision-G5/infra.git
-	branch = master
+	branch = develop

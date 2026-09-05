@@ -15,6 +15,11 @@ les équipes.
 | `dashboard` | Front React + TypeScript (Vite) |
 | `infra` | Infrastructure et déploiement |
 
+Les quatre submodules suivent `develop`, la branche d'intégration de chaque
+service (`branch = develop` dans `.gitmodules`). Le pointeur commité dans ce
+dépôt est un instantané cohérent des quatre services, pas une version
+déployée : ce qui tourne en production est décrit par `infra`.
+
 Cloner avec les submodules :
 
 ```bash
@@ -25,6 +30,31 @@ Sur un clone déjà présent :
 
 ```bash
 git submodule update --init --recursive
+```
+
+### Mise à jour des pointeurs
+
+Les pointeurs avancent **une fois par jour**, par une PR ouverte
+automatiquement chaque matin par le workflow `submodules-sync`, et à la
+demande avant une démo ou une livraison (*Actions → submodules-sync → Run
+workflow*). Pas à chaque merge dans un service : les quatre dépôts fusionnent
+plusieurs fois par jour, et une PR par merge noierait la relecture pour des
+pointeurs que seuls les humains consomment. Le coût est d'une minute
+d'Actions par jour, contre plusieurs centaines par mois au rythme des merges.
+Un jour sans merge n'ouvre rien : le workflow s'arrête quand les pointeurs
+sont déjà à jour.
+
+Le workflow pose chaque pointeur sur la tête de la branche suivie, vérifie que
+les quatre se clonent, puis pousse la branche `submodules-sync` et ouvre ou
+met à jour la PR correspondante. Relire, fusionner : `develop` du dépôt chapeau
+rattrape les services.
+
+Même geste à la main, depuis un clone à jour :
+
+```bash
+git submodule update --remote --recursive
+git add api dashboard predict infra
+git commit -m "Avancer les pointeurs de submodules sur les branches suivies"
 ```
 
 ## Contrats d'interface
@@ -45,6 +75,8 @@ que le code s'écarte du contrat gelé.
 
 ## Intégration continue
 
+Deux workflows.
+
 `.github/workflows/ci.yml` s'exécute sur chaque pull request, et sur `develop`
 et `master` après fusion. Un seul job, qui vérifie deux choses :
 
@@ -58,11 +90,28 @@ et `master` après fusion. Un seul job, qui vérifie deux choses :
 Chaque submodule porte en plus son propre pipeline lint / tests / build, avec
 un badge de statut dans son README.
 
+`.github/workflows/submodules-sync.yml` avance les pointeurs de submodules et
+ouvre la PR de mise à jour (voir [Mise à jour des
+pointeurs](#mise-à-jour-des-pointeurs)). Il tourne chaque jour à 06:00 UTC et
+à la demande. Deux conditions côté GitHub :
+
+- *Settings → Actions → General → Workflow permissions* : cocher « Allow
+  GitHub Actions to create and approve pull requests », sinon `gh pr create`
+  est refusé au jeton du job ;
+- les déclencheurs `schedule` ne sont lus que sur la branche par défaut du
+  dépôt : tant que `master` ne porte pas ce workflow, seul le lancement
+  manuel depuis `develop` fonctionne.
+
+Une PR ouverte par le jeton du job ne déclenche pas `ci.yml`. C'est pourquoi
+`submodules-sync` clone lui-même les nouveaux pointeurs avant d'ouvrir la PR,
+et met le lien de son run dans la description. Pour obtenir malgré tout le
+statut `ci`, fermer et rouvrir la PR.
+
 ### Accès de la CI aux submodules
 
 Les quatre dépôts de service sont privés : le `GITHUB_TOKEN` du job ne peut
-pas les cloner. Le workflow lit chacun d'eux avec une **clé de déploiement en
-lecture seule**, dont la partie privée est un secret Actions du dépôt
+pas les cloner. Les deux workflows lisent chacun d'eux avec une **clé de déploiement en
+lecture seule** (`.github/scripts/submodule-ssh-access.sh`), dont la partie privée est un secret Actions du dépôt
 `enervision` :
 
 | Submodule   | Clé de déploiement posée sur | Secret Actions (sur `enervision`) |

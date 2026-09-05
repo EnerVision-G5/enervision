@@ -20,44 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Les quatre submodules sont des dépôts privés de l'organisation : le
-      # GITHUB_TOKEN ne les lit pas, et GitHub n'accepte une même clé de
-      # déploiement que sur un seul dépôt. D'où une clé par submodule, chacune
-      # derrière un alias SSH, et la réécriture de l'URL https du .gitmodules
-      # vers cet alias — les développeurs gardent le clone https.
       - name: Préparer l'accès SSH aux submodules
         env:
           SUBMODULE_SSH_KEY_API: ${{ secrets.SUBMODULE_SSH_KEY_API }}
           SUBMODULE_SSH_KEY_DASHBOARD: ${{ secrets.SUBMODULE_SSH_KEY_DASHBOARD }}
           SUBMODULE_SSH_KEY_PREDICT: ${{ secrets.SUBMODULE_SSH_KEY_PREDICT }}
           SUBMODULE_SSH_KEY_INFRA: ${{ secrets.SUBMODULE_SSH_KEY_INFRA }}
-        run: |
-          set -euo pipefail
-          umask 077
-          mkdir -p ~/.ssh
-          # Clé d'hôte publiée par GitHub (docs.github.com, « GitHub's SSH key
-          # fingerprints »), figée plutôt qu'apprise au premier contact.
-          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >> ~/.ssh/known_hosts
-          missing=0
-          for name in api dashboard predict infra; do
-            var="SUBMODULE_SSH_KEY_$(printf '%s' "$name" | tr a-z A-Z)"
-            if [ -z "${!var:-}" ]; then
-              echo "::error::Secret $var absent : clé de déploiement en lecture du dépôt $name (voir README, Intégration continue)."
-              missing=1
-              continue
-            fi
-            printf '%s\n' "${!var}" > ~/.ssh/submodule-"$name"
-            cat >> ~/.ssh/config <<CONF
-          Host github-$name
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/submodule-$name
-            IdentitiesOnly yes
-          CONF
-            git config --global "url.git@github-$name:EnerVision-G5/$name.git.insteadOf" \
-              "https://github.com/EnerVision-G5/$name.git"
-          done
-          test "$missing" = 0
+        run: bash .github/scripts/submodule-ssh-access.sh
 
       # Bloquant : un pointeur vers un commit qui n'existe plus sur le dépôt
       # de service (branche supprimée, historique réécrit) fait échouer la CI.
