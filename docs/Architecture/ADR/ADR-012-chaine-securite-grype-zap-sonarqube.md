@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Amendé par ADR-016 (SonarQube retiré) |
 | Exigences liées | NF1 |
 
 ## Contexte
@@ -50,4 +50,7 @@ lui seul plusieurs surfaces avec la même qualité.
 
 ## Amendements
 
-—
+06/09/2026 — retour de mise en place — SonarQube retiré de la chaîne, voir
+[ADR-016](ADR-016-retrait-sonarqube.md) : jamais câblé, abonnement requis
+pour des dépôts privés, auto-hébergement hors de proportion. Grype et OWASP
+ZAP restent, bloquants.

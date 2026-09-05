@@ -45,9 +45,10 @@ environnements, faute d'éléments suffisants sur le coût réel du VPN.
 | [ADR-009](../ADR/ADR-009-auth-jwt-oauth2.md) | Authentification JWT via OAuth2 | Accepté | F6, NF1 |
 | [ADR-010](../ADR/ADR-010-xgboost-mlflow.md) | XGBoost + MLflow | Accepté | F4 |
 | [ADR-011](../ADR/ADR-011-terraform-iac.md) | Terraform (IaC) | Accepté | NF6 |
-| [ADR-012](../ADR/ADR-012-chaine-securite-grype-zap-sonarqube.md) | Chaîne sécurité Grype + OWASP ZAP + SonarQube | Accepté | NF1 |
+| [ADR-012](../ADR/ADR-012-chaine-securite-grype-zap-sonarqube.md) | Chaîne sécurité Grype + OWASP ZAP + SonarQube | Amendé par ADR-016 | NF1 |
 | [ADR-013](../ADR/ADR-013-secrets-key-vault.md) | Secrets : Azure Key Vault + fichiers env hors Git | Accepté | NF1 |
 | [ADR-014](../ADR/ADR-014-multi-repos-branches-pr.md) | Multi-repos + branches master → develop → feature, PR obligatoire | Accepté | NF5 |
+| [ADR-016](../ADR/ADR-016-retrait-sonarqube.md) | Retrait de SonarQube de la chaîne qualité (06/09/2026) | Accepté | NF1 |
 
 L'ADR-001 a été adoptée par consensus ; les autres décisions en découlent ou
 n'ont pas soulevé d'objection en séance.
