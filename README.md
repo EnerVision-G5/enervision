@@ -11,7 +11,7 @@ les équipes.
 | Submodule | Rôle |
 | --- | --- |
 | `api` | API métier FastAPI on-premise : sites, mesures, alertes, sous JWT |
-| `predict` | Service d'inférence FastAPI sur Azure : prédictions XGBoost |
+| `predict` | Services de données et d'inférence on-premise : collecte, ETL, entraînement, prédictions XGBoost servies à la seule API métier |
 | `dashboard` | Front React + TypeScript (Vite) |
 | `infra` | Infrastructure et déploiement |
 
