@@ -5,7 +5,7 @@ Ce dossier contient les deux spécifications qui font foi entre les équipes Ene
 | Fichier | Service | Repo générateur | Commande d'export |
 |---|---|---|---|
 | `openapi-api.json` | API métier on-premise | `api` | `python scripts/export_openapi.py ../docs/contracts/openapi-api.json` |
-| `openapi-predict.json` | Service d'inférence Azure | `predict` | `python scripts/export_openapi.py ../docs/contracts/openapi-predict.json` |
+| `openapi-predict.json` | Service d'inférence on-premise, appelé par la seule API métier | `predict` | `python scripts/export_openapi.py ../docs/contracts/openapi-predict.json` |
 
 Ces deux fichiers sont la référence commune de `api`, `dashboard` et `predict`.
 Aucune équipe ne code contre une autre source.

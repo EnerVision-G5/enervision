@@ -4,7 +4,7 @@
 | --- | --- |
 | Date | 31/08/2026 |
 | Auteur | Équipe G5 (atelier de décision d'architecture) |
-| Statut | Accepté |
+| Statut | Remplacé par ADR-017 |
 | Exigences liées | F4, NF9 |
 
 ## Contexte
@@ -48,4 +48,4 @@ cloud) ou si l'inférence doit accéder à des données brutes.
 
 ## Amendements
 
-—
+02/09/2026 — décision d'architecture V2 — remplacé par [ADR-017](ADR-017-pivot-tout-on-premise.md) : l'inférence tourne on-premise aux côtés de l'entraînement ; la promotion des modèles passe par le registre MLflow sur la même VM, sans pipeline inter-environnements.

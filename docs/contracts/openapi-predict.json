@@ -59,6 +59,25 @@
             "title": "History End",
             "type": "string"
           },
+          "history_origin": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Derniere heure REELLEMENT observee dont la prevision descend, ISO 8601 UTC. Renseignee seulement quand history_source vaut 'reference' : history_end porte alors la date decalee, et ce champ est le seul a dire d'ou vient la serie.",
+            "title": "History Origin"
+          },
+          "history_source": {
+            "default": "recent",
+            "description": "Origine des observations qui ont nourri les decalages du modele. 'recent' : les variables publiees par l'ETL sur la fenetre courante, cas normal. 'reference' : faute d'heures recentes continues, la prevision rejoue l'historique de reference decale d'un nombre entier d'annees de 52 semaines. Les heures predites restent celles qui viennent, mais la serie observee sur laquelle elles s'appuient ne decrit pas cette semaine-ci. Un consommateur qui affiche une prevision de repli sans le dire ferait passer pour une mesure du site ce qui est un profil de l'an dernier.",
+            "title": "History Source",
+            "type": "string"
+          },
           "model_version": {
             "description": "Tag MLflow du modèle ayant servi la réponse.",
             "title": "Model Version",
@@ -475,9 +494,9 @@
     }
   },
   "info": {
-    "description": "Contrat du service de prédiction déployé sur Azure. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
+    "description": "Contrat du service de prédiction, déployé on-premise et appelé par la seule API métier. La prévision est servie par le modèle que le registre MLflow désigne, et renvoie 503 tant qu'aucun modèle n'est résolu.",
     "title": "EnerVision service d'inférence",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "openapi": "3.1.0",
   "paths": {
